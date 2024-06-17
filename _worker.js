@@ -109,7 +109,7 @@ export default {
                     }
                     return new Response(JSON.stringify(request.cf, null, 4), { status: 200 });
                 case `/${fakeUserID}`:
-                    const fakeConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, 'CF-Workers-SUB', RproxyIP, url);
+                    const fakeConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, 'CF-Workers-SUB', RproxyIP, url, env);
                     return new Response(`${fakeConfig}`, { status: 200 });
                 case `/${userID}`: {
                     await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${UA}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
@@ -119,7 +119,7 @@ export default {
                             subconfig = 'https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini';
                         } else sub = 'vless-4ca.pages.dev';
                     } 
-                    const vlessConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, UA, RproxyIP, url);
+                    const vlessConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
                     const now = Date.now();
                     //const timestamp = Math.floor(now / 1000);
                     const today = new Date(now);
@@ -1271,7 +1271,7 @@ let subParams = ['sub','base64','b64','clash','singbox','sb'];
  * @param {string} UA
  * @returns {Promise<string>}
  */
-async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url) {
+async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, _env) {
     const userAgent = UA.toLowerCase();
     const Config = gen_v2ray_config(userID , hostName);
     const v2ray = Config[0];
@@ -1420,7 +1420,7 @@ https://github.com/cmliu/edgetunnel
         try {
             let content;
             if ((!sub || sub == "") && isBase64 == true) {
-                content = await subAddresses(fakeHostName,fakeUserID,noTLS,newAddressesapi,newAddressescsv,newAddressesnotlsapi,newAddressesnotlscsv);
+                content = await subAddresses(fakeHostName,fakeUserID,noTLS,newAddressesapi,newAddressescsv,newAddressesnotlsapi,newAddressesnotlscsv, _env.PS_COMMENT);
             } else {
                 const response = await fetch(url ,{
                     headers: {
@@ -1626,7 +1626,7 @@ async function getAddressescsv(tls) {
     return newAddressescsv;
 }
 
-function subAddresses(host,UUID,noTLS,newAddressesapi,newAddressescsv,newAddressesnotlsapi,newAddressesnotlscsv) {
+function subAddresses(host,UUID,noTLS,newAddressesapi,newAddressescsv,newAddressesnotlsapi,newAddressesnotlscsv,ps_comment) {
     const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
     addresses = addresses.concat(newAddressesapi);
     addresses = addresses.concat(newAddressescsv);
@@ -1669,12 +1669,12 @@ function subAddresses(host,UUID,noTLS,newAddressesapi,newAddressescsv,newAddress
 
             let v2ray_transport_host = host ;
             let v2ray_transport_path_final = '/?ed=2560' ;
-            let v2ray_node_comment = '';
+            let v2ray_node_comment = ps_comment || '';
             
             if(proxyhosts.length > 0 && (v2ray_transport_host.includes('.workers.dev') || v2ray_transport_host.includes('pages.dev'))) {
                 v2ray_transport_path_final = `/${v2ray_transport_host}${v2ray_transport_path_final}`;
                 v2ray_transport_host = proxyhosts[Math.floor(Math.random() * proxyhosts.length)];
-                v2ray_node_comment = ' 请绑定自定义域';
+                v2ray_node_comment += ' 请绑定自定义域';
             }
 
             const vlessLink = `vless://${UUID}\u0040${address}:${port}?encryption=none&security=&type=ws&host=${v2ray_transport_host}&path=${encodeURIComponent(v2ray_transport_path_final)}#${encodeURIComponent(addressid + v2ray_node_comment)}`;
@@ -1721,12 +1721,12 @@ function subAddresses(host,UUID,noTLS,newAddressesapi,newAddressescsv,newAddress
         
         let v2ray_transport_host = host ;
         let v2ray_transport_path_final = '/?ed=2560' ;
-        let v2ray_node_comment = '';
+        let v2ray_node_comment = ps_comment || '';
         
         if(proxyhosts.length > 0 && (v2ray_transport_host.includes('.workers.dev') || v2ray_transport_host.includes('pages.dev'))) {
             v2ray_transport_path_final = `/${v2ray_transport_host}${v2ray_transport_path_final}`;
             v2ray_transport_host = proxyhosts[Math.floor(Math.random() * proxyhosts.length)];
-            v2ray_node_comment = ' 请绑定自定义域';
+            v2ray_node_comment += ' 请绑定自定义域';
         }
         
         // const 协议类型 = v2ray_protocol_type;
